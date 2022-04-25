@@ -1,0 +1,215 @@
+﻿
+
+<head>
+    <link rel="stylesheet" href="~/Content/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/Content/font-awesome.min.css" />
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            text-align: center;
+            /*border: 2px solid;*/
+        }
+
+        .list-group {
+            padding: 0px;
+            width: 300px;
+            max-width: 800px;
+            margin-right: auto;
+            margin-left: auto;
+            margin-top: 50px;
+            margin-bottom: 70px;
+            /*border: 2px solid blue;*/
+        }
+
+            .list-group li {
+                border: none;
+            }
+
+                .list-group li input, .list-group li select {
+                    text-align: center;
+                    border-radius: 4px;
+                    border: 1px solid;
+                    height: 4rem;
+                    width: 80rem;
+                    font-weight: bold;
+                    font-size: 2rem;
+                }
+
+                .list-group li button {
+                    text-align: center;
+                    border-radius: 4px;
+                    border: 1px solid;
+                    height: 4rem;
+                    width: 28rem;
+                    font-weight: bold;
+                    font-size: 2rem;
+                }
+
+        #resMessage {
+            width: 80rem;
+            height: 20rem;
+            font-weight: bold;
+            font-size: 2rem;
+        }
+
+        .apiBody table tbody tr td input, .apiBody table tbody tr td button {
+            width: 9rem;
+        }
+
+        .container {
+            align-items: center;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container">
+        <ul class="list-group">
+            <li class="list-group-item">
+                <h3>POSTMAN</h3>
+            </li>
+               <li class="list-group-item">
+                <input type="text" placeholder="Enter URL" id="url" required />
+            </li>
+            <li class="list-group-item">
+                <input type="text" placeholder="UserName" id="user" required />
+            </li>
+            <li class="list-group-item">
+                <input type="password" placeholder="Password" id="pass" required />
+            </li>
+            <li class="list-group-item">
+                <select id="typeSelect">
+                    <option data-id="1">GET</option>
+                    <option data-id="2">POST</option>
+                </select>
+            </li>
+            <li class="list-group-item">
+                <button class="btn-primary" id="add">Add Body</button>
+            </li>
+            <li class="list-group-item apiBody">
+                <table class="table" style="display:none;">
+                    <tbody></tbody>
+                </table>
+            </li>
+            <li class="list-group-item">
+                <button class="btn-success" id="send">Send</button>
+            </li>
+            <li class="list-group-item">
+                <input type="text" style="display:none;border:none;" id="resCode" readonly />
+            </li>
+            <li class="list-group-item">
+                <textarea style="display:none;" id="resMessage"></textarea>
+            </li>
+        </ul>
+    </div>
+
+
+    <div class="modal result" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">test</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    <script src="~/Scripts/jquery-3.3.1.min.js"></script>
+    <script src="~/Scripts/bootstrap.min.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            $(document).on('click', '#add', function () {
+
+                var _html = "<tr><td><input type='text' placeholder='KEY' class='k' /></td>" +
+                    "<td><input type='text' placeholder='VALUE' class='v' /></td>" +
+                    "<td><button class='text-danger fa fa-remove fa-2x removeRow' style='width:50px;'></button> </td>" +
+                    "</tr>"
+
+                $(".apiBody table tbody").append(_html);
+                $(".apiBody table").css('display', 'block');
+
+            });
+
+
+            $(document).on('click', '#send', function () {
+                var url = $("#url").val();
+                var user = $("#user").val();
+                var pass = $("#pass").val();
+                var method = $("#typeSelect").find(':selected').attr('data-id');
+                var arr = new Array;
+                if ($(".apiBody table tbody tr").length > 0) {
+                    $('.apiBody table tbody tr').each(function () {
+                        arr.push({
+                            key: $(this).find('.k').val(),
+                            value: $(this).find('.v').val()
+                        });
+                    });
+                }
+
+
+                $.ajax({
+                    url: '@Url.Action("CallApi", "PostMan")',
+                    type: "POST",
+                    data: { url, user, pass, method, body: JSON.stringify(arr) },
+                    success: function (rst) {
+                        $("#resMessage").val(rst.Message);
+                        $("#resMessage").css('display', 'block');
+
+                        $("#resCode").val("Status Code : " + rst.Code);
+                        $("#resCode").css('display', 'block');
+
+                        if (rst.Code != 200) {
+                            $("#resMessage").css('background-color', 'pink');
+                        }
+                        else {
+                            $("#resMessage").css('background-color', 'lightgreen');
+                        }
+                    },
+                    error: function (err) {
+                        alert("خطا در سیستم : " + err.responseText + err.toString() + err.statusText + err.statusCode);
+                    }
+                });
+            });
+
+
+
+            $(document).on('click', '.removeRow', function () {
+                var a = $(this).closest('tr');
+                a.remove();
+                if ($(".apiBody table tbody tr").length == 0) {
+                    $(".apiBody table").css('display', 'none');
+                }
+            });
+
+
+            $(document).on('click', '#resMessage', function () {
+                //$(".result").modal('show');
+            });
+
+
+        });
+    </script>
+
+</body>
